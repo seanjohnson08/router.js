@@ -132,6 +132,35 @@ test("isActive should not break on initial intermediate route", function() {
   ok(router.isActive('admin', '1'));
 });
 
+test("Handling a URL passes in escaped param dynamic segments", function() {
+  expect(4);
+
+  var post = { post: true };
+  var accentedE = decodeURIComponent('%C3%A9');
+
+  //this is not correctly encoded as a URI, but is the result of legacy `escape(accentedE)`
+  var escapedAccentedE = '%E9';
+
+  handlers = {
+    showPost: {
+      model: function(params) {
+        deepEqual(params, { id: accentedE, queryParams: {} }, "showPost#model called with id");
+        return post;
+      },
+      setup: function(object) {
+        strictEqual(object, post, "setup was called with expected model");
+        equal(handlers.showPost.context, post, "context was properly set on showPost handler");
+      }
+    }
+  };
+
+  router.didTransition = function(infos) {
+    equal(routePath(infos), "showPost");
+  };
+
+  router.handleURL("/posts/" + escapedAccentedE);
+});
+
 test("Handling a URL passes in query params", function() {
   expect(3);
 
